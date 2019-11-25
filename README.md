@@ -1,2 +1,2 @@
 # laravel-custom-attributes
-A (advanced) custom attributes package for Eloquent Models
+A custom attributes package for Eloquent Models
