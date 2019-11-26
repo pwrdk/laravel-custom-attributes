@@ -1,5 +1,5 @@
 {
-    "name": "pwrdk/larave-custom-attributes",
+    "name": "pwrdk/laravel-custom-attributes",
     "description": "Custom Attributes Package for Eloquent Models",
     "require": {
         "php": "^7.3"
