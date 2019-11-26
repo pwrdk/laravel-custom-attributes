@@ -14,6 +14,6 @@ trait HasCustomAttributes
 
     public function attr($handle = false)
     {
-        return new CustomAttributesManager($this, $handle);
+        return (new CustomAttributesManager($this, $handle));
     }
 }

@@ -26,21 +26,26 @@ class CustomAttribute extends Model
 
     public function attributeTypeDefault()
     {
-        return $this->hasMany(AttributeTypes\AttributeTypeDefault::class);
+        return $this->hasOne(AttributeTypes\AttributeTypeDefault::class);
     }
 
     public function attributeTypeBoolean()
     {
-        return $this->hasMany(AttributeTypes\AttributeTypeBoolean::class);
+        return $this->hasOne(AttributeTypes\AttributeTypeBoolean::class);
     }
 
     public function attributeTypeNumber()
     {
-        return $this->hasMany(AttributeTypes\AttributeTypeNumber::class);
+        return $this->hasOne(AttributeTypes\AttributeTypeNumber::class);
     }
 
     public function attributeTypeDateTime()
     {
-        return $this->hasMany(AttributeTypes\AttributeTypeDateTime::class);
+        return $this->hasOne(AttributeTypes\AttributeTypeDateTime::class);
+    }
+
+    public function attributeTypeContactInformation()
+    {
+        return $this->hasOne(AttributeTypes\AttributeTypeContactInformation::class);
     }
 }

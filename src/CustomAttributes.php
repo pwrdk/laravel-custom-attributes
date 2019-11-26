@@ -5,6 +5,7 @@ namespace PWRDK\CustomAttributes;
 use Illuminate\Support\Str;
 use PWRDK\CustomAttributes\Models\AttributeKey;
 use PWRDK\CustomAttributes\Models\AttributeType;
+use Cache;
 
 class CustomAttributes
 {
@@ -25,9 +26,9 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function update($newValue, $index = 0)
+    public function update($handle, $newValue, $index = 0)
     {
-        $ak = $this->getAttributeKeyByHandle($this->handle);
+        $ak = $this->getAttributeKeyByHandle($handle);
         $type = $ak->type->handle;
         
         $this->model->customAttributes()->where('key_id', $ak->id)->get()->each(function ($attributeSet) use ($type, $index, $newValue) {
@@ -37,6 +38,8 @@ class CustomAttributes
             $relationshipName = $this->makeRelationshipName($type);
             $attributeSet->$relationshipName[$index]->update(['value' => $newValue]);
         });
+
+        Cache::forget($this->makeCacheKey());
     }
 
     /**
@@ -45,20 +48,25 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function unset()
+    public function unset($handle = false)
     {
-        $ak = $this->getAttributeKeyByHandle($this->handle);
-        $this->model->customAttributes()->where('key_id', $ak->id)->delete();
-        return $this->get();
+        if (!$handle) {
+            $this->model->customAttributes()->delete();
+        } else {
+            $ak = $this->getAttributeKeyByHandle($handle);
+            $this->model->customAttributes()->where('key_id', $ak->id)->delete();
+        }
+
+        Cache::forget($this->makeCacheKey());
     }
 
-    public function set($newValues)
+    public function set($handle, $newValues)
     {
         if (!is_array($newValues)) {
             $newValues = ['value' => $newValues];
         }
 
-        $ak = $this->getAttributeKeyByHandle($this->handle);
+        $ak = $this->getAttributeKeyByHandle($handle);
         if (!$ak) {
             return false;
         }
@@ -90,7 +98,8 @@ class CustomAttributes
                 ['custom_attribute_id' => $newCa->id],
             )
         );
-        return $this->get($this->handle);
+        Cache::forget($this->makeCacheKey());
+        return $attr;
     }
     
 
@@ -103,34 +112,46 @@ class CustomAttributes
     public function get()
     {
         $this->collection = collect();
-        $this->model->customAttributes->filter(function ($attributeSet) {
-            if (!$this->handle) {
-                return true;
+        $cacheKey = $this->makeCacheKey();
+        // if (Cache::has($cacheKey)) {
+        //     dump("Getting from cache");
+        //     $this->collection = Cache::get($cacheKey);
+        // } else {
+            $this->model->customAttributes->each(function ($attributeSet) {
+                $type = $attributeSet->key->type->handle;
+
+                $relationshipName = $this->makeRelationshipName($type);
+
+                //- More than one attrib might be set for this key
+                // $values = $attributeSet->{$relationshipName}->map(function ($attribs) {
+                //     return $attribs->getFields();
+                // });
+
+                $values = $attributeSet->{$relationshipName};
+
+                if (!isset($this->collection[$attributeSet->key->handle])) {
+                    $this->collection[$attributeSet->key->handle] = collect();
+                }
+
+                $this->collection[$attributeSet->key->handle]->push($values);
+            });
+            
+        //     Cache::put($cacheKey, $this->collection);
+        // }
+
+        $output = [];
+
+        if ($this->handle && isset($this->collection[$this->handle])) {
+            if (count($this->collection[$this->handle]) == 1) {
+                $output = $this->collection[$this->handle]->first()->value;
+            } else {
+                $output = $this->collection[$this->handle];
             }
-            return $attributeSet->key->handle == $this->handle;
-        })->each(function ($attributeSet) {
-            $type = $attributeSet->key->type->handle;
+        } else {
+            $output = $this->collection;
+        }
 
-            $relationshipName = $this->makeRelationshipName($type);
-
-            //- More than one attrib might be set for this key
-            $values = $attributeSet->{$relationshipName}->map(function ($attribs) {
-                return $attribs->getFields()->flatten();
-            })->collapse();
-
-            if (!isset($this->collection[$attributeSet->key->handle])) {
-                $this->collection[$attributeSet->key->handle] = collect();
-            }
-
-            $this->collection[$attributeSet->key->handle]->push($values);
-        });
-
-        return $this->collection->map(function ($attributes, $key) {
-            if (count($attributes) == 1) {
-                return $attributes->flatten()->first();
-            }
-            return $attributes->flatten()->toArray();
-        })->all();
+        return $output;
     }
 
     /**
@@ -155,6 +176,18 @@ class CustomAttributes
             'is_unique' => $isUnique
         ]);
 
+        return $ak;
+    }
+
+    public static function getKeys()
+    {
+        $ak = AttributeKey::with('type')->get()->map(function ($key) {
+            return [
+                'display_name' => $key->display_name,
+                'handle' => $key->handle,
+                'type' => $key->type->display_name,
+            ];
+        });
         return $ak;
     }
 
@@ -197,6 +230,17 @@ class CustomAttributes
             $type = 'default';
         }
         
-        return 'attributeType' . ucfirst($type);
+        return 'attributeType' . Str::studly($type);
+    }
+
+    protected function makeCacheKey()
+    {
+        return str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id;
+    }
+
+    public function __get($attr)
+    {
+        $this->handle = $attr;
+        return $this->get();
     }
 }
