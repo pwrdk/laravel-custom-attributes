@@ -45,40 +45,9 @@ $user->attr()->set('favourite_colours','green');
 $user->attr()->set('favourite_colours','blue');
 ```
 
-List all attributes for a given model
+Unsetting an attribute
 ``` php
-$user->attr()->get();
-=> Illuminate\Support\Collection {#939
-     all: [
-       "is_active" => Illuminate\Support\Collection {#953
-         all: [
-           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeBoolean {#970
-             value: 1,
-           },
-         ],
-       },
-       "last_seen" => Illuminate\Support\Collection {#957
-         all: [
-           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDateTime {#977
-             value: "2019-11-26 19:26:02",
-           },
-         ],
-       },
-       "favourite_colours" => Illuminate\Support\Collection {#944
-         all: [
-           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#984
-             value: "red",
-           },
-           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#991
-             value: "green",
-           },
-           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#997
-             value: "blue",
-           },
-         ],
-       },
-     ],
-   }
+$user->attr()->unset('is_active');
 ```
 
 Get an attribute by handle
@@ -86,7 +55,7 @@ Get an attribute by handle
 $user->attr()->is_active;
 => 1
 
-$user->attr('favourite_colours')->get();
+$user->attr()->favourite_colours;
 => Illuminate\Support\Collection {#944
      all: [
        PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#984
@@ -101,3 +70,16 @@ $user->attr('favourite_colours')->get();
      ],
    }
 ```
+
+Update an attribute when there are more than one
+``` php
+$user
+    ->attr()
+    ->update('favourite_colours',
+      ['value' => 'red'], // Old values
+      ['value' => 'orange'] // New Values
+    );
+```
+
+
+
