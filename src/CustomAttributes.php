@@ -26,18 +26,22 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function update($handle, $newValue, $index = 0)
+    public function update($handle, $oldValues, $newValues)
     {
         $ak = $this->getAttributeKeyByHandle($handle);
         $type = $ak->type->handle;
-        
-        $this->model->customAttributes()->where('key_id', $ak->id)->get()->each(function ($attributeSet) use ($type, $index, $newValue) {
+
+        $attributes = $this->model->customAttributes()->where('key_id', $ak->id)->get()->map(function ($attributeSet) use ($type, $newValues) {
             if ($type == 'text') {
                 $type = 'default';
             }
             $relationshipName = $this->makeRelationshipName($type);
-            $attributeSet->$relationshipName[$index]->update(['value' => $newValue]);
+            
+            return $attributeSet->$relationshipName;
         });
+
+        
+        $attributes->where(key($oldValues), current($oldValues))->first()->update($newValues);
 
         Cache::forget($this->makeCacheKey());
     }
