@@ -38,40 +38,66 @@ CustomAttributes::createKey('favourite_colours', 'Favourite Colours', 'text', fa
 
 Attach the attribute to the Model
 ``` php
-$user->attr('is_active')->set(true);
-$user->attr('last_seen')->set(now());
-$user->attr('favourite_colours')->set('red');
-$user->attr('favourite_colours')->set('green');
-$user->attr('favourite_colours')->set('blue');
+$user->attr()->set('is_active', true);
+$user->attr()->set('last_seen', now());
+$user->attr()->set('favourite_colours','red');
+$user->attr()->set('favourite_colours','green');
+$user->attr()->set('favourite_colours','blue');
 ```
 
 List all attributes for a given model
 ``` php
 $user->attr()->get();
-=> [
-     "is_active" => 1,
-     "last_seen" => "2019-11-26 09:30:01",
-     "favourite_colours" => [
-       "red",
-       "green",
-       "blue",
+=> Illuminate\Support\Collection {#939
+     all: [
+       "is_active" => Illuminate\Support\Collection {#953
+         all: [
+           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeBoolean {#970
+             value: 1,
+           },
+         ],
+       },
+       "last_seen" => Illuminate\Support\Collection {#957
+         all: [
+           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDateTime {#977
+             value: "2019-11-26 19:26:02",
+           },
+         ],
+       },
+       "favourite_colours" => Illuminate\Support\Collection {#944
+         all: [
+           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#984
+             value: "red",
+           },
+           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#991
+             value: "green",
+           },
+           PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#997
+             value: "blue",
+           },
+         ],
+       },
      ],
-   ]
+   }
 ```
 
 Get an attribute by handle
 ``` php
-$user->attr('is_active')->get();
-=> [
-     "is_active" => 1,
-   ]
+$user->attr()->is_active;
+=> 1
 
 $user->attr('favourite_colours')->get();
-=> [
-     "favourite_colours" => [
-       "red",
-       "green",
-       "blue",
+=> Illuminate\Support\Collection {#944
+     all: [
+       PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#984
+         value: "red",
+       },
+       PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#991
+         value: "green",
+       },
+       PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#997
+         value: "blue",
+       },
      ],
-   ]
+   }
 ```
