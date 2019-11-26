@@ -141,17 +141,17 @@ class CustomAttributes
      * @return CustomAttributes\AttributeKey
      * @author PWR
      */
-    public function createKey($options, $isUnique = true)
+    public static function createKey($handle, $name, $type, $isUnique = true)
     {
-        if ($existing = AttributeKey::where('handle', $this->handle)->first()) {
+        if ($existing = AttributeKey::where('handle', $handle)->first()) {
             return $existing;
         }
 
-        $type = AttributeType::where('handle', $options['type'])->first();
+        $type = AttributeType::where('handle', $type)->first();
         $ak = AttributeKey::create([
             'type_id' => $type->id,
-            'display_name' => $options['name'],
-            'handle' => Str::snake($options['handle'] ?? $options['name']),
+            'display_name' => $name,
+            'handle' => Str::snake($handle ?? $name),
             'is_unique' => $isUnique
         ]);
 
