@@ -45,8 +45,33 @@ $user->attr('favourite_colours')->set('green');
 $user->attr('favourite_colours')->set('blue');
 ```
 
-Get and use the attributes
+List all attributes for a given model
+``` php
+$user->attr()->get();
+=> [
+     "is_active" => 1,
+     "last_seen" => "2019-11-26 09:30:01",
+     "favourite_colours" => [
+       "red",
+       "green",
+       "blue",
+     ],
+   ]
+```
+
+Get an attribute by handle
 ``` php
 $user->attr('is_active')->get();
+=> [
+     "is_active" => 1,
+   ]
+
 $user->attr('favourite_colours')->get();
+=> [
+     "favourite_colours" => [
+       "red",
+       "green",
+       "blue",
+     ],
+   ]
 ```
