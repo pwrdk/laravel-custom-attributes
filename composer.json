@@ -1,0 +1,26 @@
+{
+    "name": "pwrdk/larave-custom-attributes",
+    "description": "Custom Attributes Package for Eloquent Models",
+    "require": {
+        "php": "^7.3"
+    },
+    "authors": [
+        {
+            "name": "Peter Waerum",
+            "email": "peter@datainsights.dk"
+        }
+    ],
+    "minimum-stability": "dev",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "PWRDK\\CustomAttributes\\CustomAttributesServiceProvider"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "PWRDK\\CustomAttributes\\": "src/"
+        }
+    }
+}
