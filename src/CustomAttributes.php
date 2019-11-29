@@ -5,6 +5,7 @@ namespace PWRDK\CustomAttributes;
 use Illuminate\Support\Str;
 use PWRDK\CustomAttributes\Models\AttributeKey;
 use PWRDK\CustomAttributes\Models\AttributeType;
+use PWRDK\CustomAttributes\Models\CustomAttribute;
 use Cache;
 
 class CustomAttributes
@@ -121,25 +122,8 @@ class CustomAttributes
         //     dump("Getting from cache");
         //     $this->collection = Cache::get($cacheKey);
         // } else {
-            $this->model->customAttributes->each(function ($attributeSet) {
-                $type = $attributeSet->key->type->handle;
+        $this->collection = $this->buildRelationships($this->model->customAttributes);
 
-                $relationshipName = $this->makeRelationshipName($type);
-
-                //- More than one attrib might be set for this key
-                // $values = $attributeSet->{$relationshipName}->map(function ($attribs) {
-                //     return $attribs->getFields();
-                // });
-
-                $values = $attributeSet->{$relationshipName};
-
-                if (!isset($this->collection[$attributeSet->key->handle])) {
-                    $this->collection[$attributeSet->key->handle] = collect();
-                }
-
-                $this->collection[$attributeSet->key->handle]->push($values);
-            });
-            
         //     Cache::put($cacheKey, $this->collection);
         // }
 
@@ -160,6 +144,32 @@ class CustomAttributes
 
         return $output;
     }
+
+    public function buildRelationships($modelCustomAttributes)
+    {
+        $rtn = collect();
+        foreach ($modelCustomAttributes as $attributeSet) {
+            $type = $attributeSet->key->type->handle;
+
+            $relationshipName = $this->makeRelationshipName($type);
+
+            //- More than one attrib might be set for this key
+            // $values = $attributeSet->{$relationshipName}->map(function ($attribs) {
+            //     return $attribs->getFields();
+            // });
+
+            $values = $attributeSet->{$relationshipName};
+
+            if (!isset($rtn[$attributeSet->key->handle])) {
+                $rtn[$attributeSet->key->handle] = collect();
+            }
+
+            $rtn[$attributeSet->key->handle]->push($values);
+        };
+
+        return $rtn;
+    }
+
 
     /**
      * Create a new attribute key and set it's options
@@ -249,5 +259,20 @@ class CustomAttributes
     {
         $this->handle = $attr;
         return $this->get();
+    }
+
+    public static function getByType($handle)
+    {
+        $type = AttributeType::with('keys')->where('handle', $handle)->first();
+        $output = collect();
+        foreach ($type->keys as $key) {
+            $modelCustomAttributes = (new static($key))->buildRelationships($key->customAttributes);
+
+            foreach ($modelCustomAttributes as $attributeCollection) {
+                $output[$key->handle] = $attributeCollection->pluck('value');
+            }
+        }
+
+        return $output;
     }
 }
