@@ -2,9 +2,12 @@
 namespace PWRDK\CustomAttributes\Models\AttributeTypes;
 
 use Illuminate\Database\Eloquent\Model;
+use PWRDK\CustomAttributes\IsCustomAttribute;
 
 class AttributeTypeDateTime extends Model
 {
+    use IsCustomAttribute;
+
     protected $fillable = ['custom_attribute_id', 'value'];
     public $timestamps = false;
     protected $primaryKey = 'custom_attribute_id';
@@ -14,11 +17,4 @@ class AttributeTypeDateTime extends Model
     protected $casts = [
         'value' => 'datetime'
     ];
-
-    public function getFields()
-    {
-        return collect($this->getAttributes())->filter(function ($val, $key) {
-            return !in_array($key, $this->hidden);
-        });
-    }
 }
