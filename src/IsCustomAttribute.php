@@ -2,9 +2,6 @@
 
 namespace PWRDK\CustomAttributes;
 
-use PWRDK\CustomAttributes\CustomAttributes as CustomAttributesManager;
-use PWRDK\CustomAttributes\Models\CustomAttribute;
-
 trait IsCustomAttribute
 {
     public function getFields()
