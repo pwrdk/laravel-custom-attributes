@@ -113,7 +113,7 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function get()
+    public function get(\Closure $callback = null)
     {
         $this->collection = collect();
         $cacheKey = $this->makeCacheKey();
@@ -153,6 +153,9 @@ class CustomAttributes
             }
         } else {
             $output = $this->collection;
+        }
+        if (!is_null($callback)) {
+            return $callback($output);
         }
 
         return $output;
