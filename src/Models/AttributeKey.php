@@ -13,4 +13,9 @@ class AttributeKey extends Model
     {
         return $this->belongsTo(AttributeType::class);
     }
+
+    public function customAttributes()
+    {
+        return $this->hasMany(CustomAttribute::class, 'key_id');
+    }
 }
