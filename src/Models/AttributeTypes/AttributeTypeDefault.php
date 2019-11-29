@@ -13,4 +13,9 @@ class AttributeTypeDefault extends Model
     protected $primaryKey = 'custom_attribute_id';
     protected $table = 'attribute_values_default';
     public $hidden = ['id', 'custom_attribute_id'];
+
+    public function mappedValue()
+    {
+        return $this->value;
+    }
 }

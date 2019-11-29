@@ -13,4 +13,9 @@ class AttributeTypeContactInformation extends Model
     protected $primaryKey = 'custom_attribute_id';
     protected $table = 'attribute_values_contact_information';
     public $hidden = ['id', 'custom_attribute_id'];
+
+    public function val()
+    {
+        return $this->getFields()->toArray();
+    }
 }

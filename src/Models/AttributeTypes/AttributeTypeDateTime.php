@@ -17,4 +17,9 @@ class AttributeTypeDateTime extends Model
     protected $casts = [
         'value' => 'datetime'
     ];
+
+    public function mappedValue()
+    {
+        return $this->value;
+    }
 }
