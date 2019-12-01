@@ -21,6 +21,11 @@ Install basic Attribute Types (text, number, boolean, datetime and contact info)
 php artisan db:seed --class="PWRDK\CustomAttributes\Seeds\DatabaseSeeder"
 ```
 
+Publish config file
+```php
+php artisan vendor:publish --provider="PWRDK\CustomAttributes\CustomAttributesServiceProvider"
+```
+
 ## Usage
 Add HasCustomAttributes trait to Any Eloquent Model
 ``` php
@@ -36,6 +41,11 @@ CustomAttributes::createKey('last_seen', 'Last seen', 'datetime', true);
 CustomAttributes::createKey('favourite_colours', 'Favourite Colours', 'text', false);
 ```
 
+List all available keys:
+``` php
+AttributeKey::all()->pluck('handle', 'display_name');
+```
+
 Attach the attribute to the Model
 ``` php
 $user->attr()->set('is_active', true);
@@ -45,40 +55,77 @@ $user->attr()->set('favourite_colours','green');
 $user->attr()->set('favourite_colours','blue');
 ```
 
-Unsetting an attribute
-``` php
-$user->attr()->unset('is_active');
-```
-
 Get an attribute by handle
 ``` php
 $user->attr()->is_active;
-=> 1
+=> Illuminate\Support\Collection {#962
+     all: [
+       [
+         "key" => "is_active",
+         "value" => 1,
+         "creator_id" => null,
+         "created_at" => Illuminate\Support\Carbon @1575184861 {#956
+           date: 2019-12-01 07:21:01.0 UTC (+00:00),
+         },
+         "id" => 56,
+       ],
+     ],
+   }
+
+$user->attr()->last_seen;
+=> Illuminate\Support\Collection {#962
+     all: [
+       [
+         "key" => "last_seen",
+         "value" => Illuminate\Support\Carbon @1574796362 {#960
+           date: 2019-11-26 19:26:02.0 UTC (+00:00),
+         },
+         "creator_id" => null,
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#956
+           date: 2019-12-01 07:21:40.0 UTC (+00:00),
+         },
+         "id" => 57,
+       ],
+     ],
+   }
 
 $user->attr()->favourite_colours;
-=> Illuminate\Support\Collection {#944
+=> Illuminate\Support\Collection {#960
      all: [
-       PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#984
-         value: "red",
-       },
-       PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#991
-         value: "green",
-       },
-       PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#997
-         value: "blue",
-       },
+       [
+         "key" => "favourite_colours",
+         "value" => "orange",
+         "creator_id" => null,
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#948
+           date: 2019-12-01 07:21:40.0 UTC (+00:00),
+         },
+         "id" => 58,
+       ],
+       [
+         "key" => "favourite_colours",
+         "value" => "green",
+         "creator_id" => null,
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#980
+           date: 2019-12-01 07:21:40.0 UTC (+00:00),
+         },
+         "id" => 59,
+       ],
+       [
+         "key" => "favourite_colours",
+         "value" => "purple",
+         "creator_id" => null,
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#986
+           date: 2019-12-01 07:21:40.0 UTC (+00:00),
+         },
+         "id" => 60,
+       ],
      ],
    }
 ```
 
-Update an attribute when there are more than one
+Unsetting an attribute
 ``` php
-$user
-    ->attr()
-    ->update('favourite_colours',
-      ['value' => 'red'], // Old values
-      ['value' => 'orange'] // New Values
-    );
+$user->attr()->unset('is_active');
 ```
 
 
