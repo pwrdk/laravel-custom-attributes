@@ -145,7 +145,6 @@ class CustomAttributes
         $cacheKeyCollection = $cacheKey . ':' . md5($modelCustomAttributes);
 
         if (Cache::has($cacheKeyCollection)) {
-            dump("Getting from cache");
             $collection = Cache::get($cacheKeyCollection);
         } else {
             $collection = $this->buildRelationships($modelCustomAttributes)->filter()->groupBy('key')

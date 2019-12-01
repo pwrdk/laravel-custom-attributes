@@ -63,7 +63,6 @@ $user->attr()->is_active;
        [
          "key" => "is_active",
          "value" => 1,
-         "creator_id" => 1,
          "created_at" => Illuminate\Support\Carbon @1575184861 {#956
            date: 2019-12-01 07:21:01.0 UTC (+00:00),
          },
@@ -80,7 +79,6 @@ $user->attr()->last_seen;
          "value" => Illuminate\Support\Carbon @1574796362 {#960
            date: 2019-11-26 19:26:02.0 UTC (+00:00),
          },
-         "creator_id" => 1,
          "created_at" => Illuminate\Support\Carbon @1575184900 {#956
            date: 2019-12-01 07:21:40.0 UTC (+00:00),
          },
