@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class CustomAttribute extends Model
 {
 
-    protected $fillable = ['key_id','value_id'];
-    public $timestamps = false;
+    protected $fillable = ['key_id','value_id', 'creator_id'];
 
     public function attributable()
     {
@@ -17,6 +16,11 @@ class CustomAttribute extends Model
     public function key()
     {
         return $this->belongsTo(AttributeKey::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(config('customattributes.usermodel'));
     }
 
     public function getHandlerAttribute()

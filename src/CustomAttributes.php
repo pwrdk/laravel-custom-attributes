@@ -13,10 +13,11 @@ class CustomAttributes
     protected $model;
     public $handle;
     protected $classPath;
+    protected $creatorId;
 
-    public function __construct($model, $handle = false)
+    public function __construct($model, $creatorId = null)
     {
-        $this->handle = $handle;
+        $this->creatorId = $creatorId;
         $this->model = $model;
         $this->classPath = 'PWRDK\CustomAttributes\Models\AttributeTypes\\';
     }
@@ -93,9 +94,11 @@ class CustomAttributes
         }
 
         //- Create a new entry in the CustomAttributes table
-        $newCa = $this->model->customAttributes()->create([
-            'key_id' => $ak->id,
-        ]);
+        $data = ['key_id' => $ak->id];
+        if ($this->creatorId > 0) {
+            $data['creator_id'] = $this->creatorId;
+        }
+        $newCa = $this->model->customAttributes()->create($data);
 
         $className = $this->classPath . $relationshipName;
         //- Create a new entry in the CustomAttributes table
@@ -126,8 +129,10 @@ class CustomAttributes
         if (Cache::has($cacheKey)) {
             $modelCustomAttributes = Cache::get($cacheKey);
         } else {
-            $modelCustomAttributes = $this->model->customAttributes()->whereHas('key', function ($query) {
-                return $query->where('handle', $this->handle);
+            $modelCustomAttributes = $this->model->customAttributes()->when($this->handle, function ($query) {
+                $query->whereHas('key', function ($query) {
+                    return $query->where('handle', $this->handle);
+                });
             })->get();
             if (!count($modelCustomAttributes)) {
                 return false;
@@ -151,20 +156,24 @@ class CustomAttributes
 
             $relationshipName = $this->makeRelationshipName($type);
             $types[] = $type;
-            $mappedValue = $customAttributeModel->{$relationshipName}()->first()->mappedValue();
+            if ($mappedValue = $customAttributeModel->{$relationshipName}()->first()) {
+                $mappedValue = $mappedValue->mappedValue();
+            } else {
+                return false;
+            }
             return [
                 'key' => $customAttributeModel->key->handle,
-                'value' => $mappedValue
+                'value' => $mappedValue,
+                'creator_id' => $customAttributeModel->creator_id,
+                'created_at' => $customAttributeModel->created_at,
+                'id' => $customAttributeModel->id,
             ];
 
             return false;
         })->filter()->groupBy('key')->map(function ($collection) {
-            if (count($collection) == 1) {
-                return $collection->pluck('value')->first();
-            }
-            return $collection->pluck('value');
+            return $collection;
         })->when($this->handle, function ($collection) {
-            $values = $collection->flatten()->values();
+            $values = $collection->values();
             if (count($values) == 1) {
                 return $values->first();
             }

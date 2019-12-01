@@ -12,8 +12,8 @@ trait HasCustomAttributes
         return $this->morphMany(CustomAttribute::class, 'attributable');
     }
 
-    public function attr($handle = false)
+    public function attr()
     {
-        return (new CustomAttributesManager($this, $handle));
+        return (new CustomAttributesManager($this, \Auth::user()->id ?? null));
     }
 }

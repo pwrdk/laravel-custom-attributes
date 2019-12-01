@@ -16,11 +16,13 @@ class CreateCustomAttributesTable extends Migration
         Schema::create('custom_attributes', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('key_id');
+            $table->unsignedBigInteger('creator_id')->nullable();
             $table->integer('attributable_id')->nullable();
             $table->string('attributable_type')->nullable();
             $table->timestamps();
             
             $table->foreign('key_id')->references('id')->on('attribute_keys')->onDelete('cascade');
+            $table->foreign('creator_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
