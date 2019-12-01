@@ -28,24 +28,24 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function update($handle, $oldValues, $newValues)
+    public function update($attributeId, $newValues)
     {
-        $ak = $this->getAttributeKeyByHandle($handle);
-        $type = $ak->type->handle;
-
-        $attributes = $this->model->customAttributes()->where('key_id', $ak->id)->get()->map(function ($attributeSet) use ($type, $newValues) {
-            if ($type == 'text') {
-                $type = 'default';
-            }
-            $relationshipName = $this->makeRelationshipName($type);
-            
-            return $attributeSet->$relationshipName;
-        });
-
+        $attribute = CustomAttribute::find($attributeId);
+        //- This gives us $attribute->attributeTypeDefault
+        $relationshipName = $this->makeRelationshipName($attribute->key->type->handle);
         
-        $attributes->where(key($oldValues), current($oldValues))->first()->update($newValues);
+        //- There will always be only one entry per custom attribute row
+        $targetAttribute = $attribute->{$relationshipName}()->first();
+        
+        //- Perform the update
+        $targetAttribute->update($newValues);
+        
+        //- The handle is needed for the cache
+        $this->handle = $attribute->key->handle;
 
         Cache::forget($this->makeCacheKey());
+
+        return $targetAttribute;
     }
 
     /**
@@ -133,6 +133,8 @@ class CustomAttributes
                 $query->whereHas('key', function ($query) {
                     return $query->where('handle', $this->handle);
                 });
+            })->when($this->creatorId, function ($query) {
+                $query->with('creator');
             })->get();
             if (!count($modelCustomAttributes)) {
                 return false;
@@ -140,8 +142,24 @@ class CustomAttributes
             Cache::put($cacheKey, $modelCustomAttributes);
         }
 
-        $collection = $this->buildRelationships($modelCustomAttributes);
+        $cacheKeyCollection = $cacheKey . ':' . md5($modelCustomAttributes);
 
+        if (Cache::has($cacheKeyCollection)) {
+            dump("Getting from cache");
+            $collection = Cache::get($cacheKeyCollection);
+        } else {
+            $collection = $this->buildRelationships($modelCustomAttributes)->filter()->groupBy('key')
+                ->when($this->handle, function ($collection) {
+                    $values = $collection->values();
+                    if (count($values) == 1) {
+                        return $values->first();
+                    }
+                    return $values;
+                });
+            
+            Cache::put($cacheKeyCollection, $collection);
+        }
+        
         if (!is_null($callback)) {
             return $callback($collection);
         }
@@ -161,24 +179,18 @@ class CustomAttributes
             } else {
                 return false;
             }
-            return [
+            $data = [
                 'key' => $customAttributeModel->key->handle,
                 'value' => $mappedValue,
-                'creator_id' => $customAttributeModel->creator_id,
                 'created_at' => $customAttributeModel->created_at,
                 'id' => $customAttributeModel->id,
             ];
 
-            return false;
-        })->filter()->groupBy('key')->map(function ($collection) {
-            return $collection;
-        })->when($this->handle, function ($collection) {
-            $values = $collection->values();
-            if (count($values) == 1) {
-                return $values->first();
+            if ($this->creatorId) {
+                $data += ['creator' => $customAttributeModel->creator];
             }
 
-            return $values;
+            return $data;
         });
     }
 
