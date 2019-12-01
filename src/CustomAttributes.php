@@ -126,7 +126,7 @@ class CustomAttributes
         $this->collection = collect();
         $cacheKey = $this->makeCacheKey();
 
-        if (Cache::has($cacheKey)) {
+        if (Cache::has($cacheKey) && !self::shouldPurgeCache()) {
             $modelCustomAttributes = Cache::get($cacheKey);
         } else {
             $modelCustomAttributes = $this->model->customAttributes()->when($this->handle, function ($query) {
@@ -273,9 +273,23 @@ class CustomAttributes
         return 'attributeType' . Str::studly($type);
     }
 
-    protected function makeCacheKey()
+    protected function makeCacheKey($handle = false)
     {
-        return str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($this->handle ?? 'all');
+        return str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($this->handle ?? $handle ?? 'all');
+    }
+
+    public static function shouldPurgeCache($put = false)
+    {
+        if (!$put) {
+            if (Cache::has('custom-attributes:should-purge')) {
+                Cache::forget('custom-attributes:should-purge');
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            Cache::put('custom-attributes:should-purge', 1);
+        }
     }
 
     public function __get($attr)
