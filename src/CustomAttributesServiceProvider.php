@@ -25,6 +25,9 @@ class CustomAttributesServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->publishes([
+            __DIR__.'/config/customattributes.php' => config_path('customattributes.php')
+        ], 'config');
         $this->loadMigrationsFrom(__DIR__.'/migrations');
     }
 }
