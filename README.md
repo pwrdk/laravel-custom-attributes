@@ -63,7 +63,7 @@ $user->attr()->is_active;
        [
          "key" => "is_active",
          "value" => 1,
-         "creator_id" => null,
+         "creator_id" => 1,
          "created_at" => Illuminate\Support\Carbon @1575184861 {#956
            date: 2019-12-01 07:21:01.0 UTC (+00:00),
          },
@@ -80,7 +80,7 @@ $user->attr()->last_seen;
          "value" => Illuminate\Support\Carbon @1574796362 {#960
            date: 2019-11-26 19:26:02.0 UTC (+00:00),
          },
-         "creator_id" => null,
+         "creator_id" => 1,
          "created_at" => Illuminate\Support\Carbon @1575184900 {#956
            date: 2019-12-01 07:21:40.0 UTC (+00:00),
          },
@@ -90,34 +90,41 @@ $user->attr()->last_seen;
    }
 
 $user->attr()->favourite_colours;
-=> Illuminate\Support\Collection {#960
+=> Illuminate\Support\Collection {#962
      all: [
        [
          "key" => "favourite_colours",
          "value" => "orange",
-         "creator_id" => null,
-         "created_at" => Illuminate\Support\Carbon @1575184900 {#948
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#956
            date: 2019-12-01 07:21:40.0 UTC (+00:00),
          },
          "id" => 58,
+         "creator" => App\User {#983
+           id: 1,
+           name: "Rudolf Schwann",
+           email: "schwann@damernesmagasin.com",
+           email_verified_at: null,
+           created_at: "2019-11-26 08:42:25",
+           updated_at: "2019-11-26 08:42:25",
+         },
        ],
        [
          "key" => "favourite_colours",
          "value" => "green",
-         "creator_id" => null,
-         "created_at" => Illuminate\Support\Carbon @1575184900 {#980
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#981
            date: 2019-12-01 07:21:40.0 UTC (+00:00),
          },
          "id" => 59,
+         "creator" => App\User {#983},
        ],
        [
          "key" => "favourite_colours",
          "value" => "purple",
-         "creator_id" => null,
-         "created_at" => Illuminate\Support\Carbon @1575184900 {#986
+         "created_at" => Illuminate\Support\Carbon @1575184900 {#988
            date: 2019-12-01 07:21:40.0 UTC (+00:00),
          },
          "id" => 60,
+         "creator" => App\User {#983},
        ],
      ],
    }
@@ -126,6 +133,14 @@ $user->attr()->favourite_colours;
 Unsetting an attribute
 ``` php
 $user->attr()->unset('is_active');
+```
+
+Updating an attribute is done by referencing the ID directly
+``` php
+$user->attr()->update(58, ['value' => 'cyan']);
+=> PWRDK\CustomAttributes\Models\AttributeTypes\AttributeTypeDefault {#975
+     value: "yellow",
+   }
 ```
 
 
