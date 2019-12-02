@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use PWRDK\CustomAttributes\Models\AttributeKey;
 use PWRDK\CustomAttributes\Models\AttributeType;
 use PWRDK\CustomAttributes\Models\CustomAttribute;
+use PWRDK\CustomAttributes\CustomAttributeOutput;
 use Cache;
 
 class CustomAttributes
@@ -14,6 +15,7 @@ class CustomAttributes
     public $handle;
     protected $classPath;
     protected $creatorId;
+    protected $useCaching = false;
 
     public function __construct($model, $creatorId = null)
     {
@@ -126,7 +128,7 @@ class CustomAttributes
         $this->collection = collect();
         $cacheKey = $this->makeCacheKey();
 
-        if (Cache::has($cacheKey) && !self::shouldPurgeCache()) {
+        if ($this->useCaching && Cache::has($cacheKey) && !self::shouldPurgeCache()) {
             $modelCustomAttributes = Cache::get($cacheKey);
         } else {
             $modelCustomAttributes = $this->model->customAttributes()->when($this->handle, function ($query) {
@@ -136,6 +138,7 @@ class CustomAttributes
             })->when($this->creatorId, function ($query) {
                 $query->with('creator');
             })->get();
+
             if (!count($modelCustomAttributes)) {
                 return false;
             }
@@ -144,18 +147,15 @@ class CustomAttributes
 
         $cacheKeyCollection = $cacheKey . ':' . md5($modelCustomAttributes);
 
-        if (Cache::has($cacheKeyCollection)) {
+        if ($this->useCaching && Cache::has($cacheKeyCollection) && !self::shouldPurgeCache()) {
             $collection = Cache::get($cacheKeyCollection);
         } else {
             $collection = $this->buildRelationships($modelCustomAttributes)->filter()->groupBy('key')
                 ->when($this->handle, function ($collection) {
                     $values = $collection->values();
-                    if (count($values) == 1) {
-                        return $values->first();
-                    }
-                    return $values;
+                    return $values->first();
                 });
-            
+
             Cache::put($cacheKeyCollection, $collection);
         }
         
@@ -188,8 +188,10 @@ class CustomAttributes
             if ($this->creatorId) {
                 $data += ['creator' => $customAttributeModel->creator];
             }
-
-            return $data;
+            
+            $obj = new CustomAttributeOutput($data);
+            
+            return $obj;
         });
     }
 
