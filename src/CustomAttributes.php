@@ -150,11 +150,17 @@ class CustomAttributes
         if ($this->useCaching && Cache::has($cacheKeyCollection) && !self::shouldPurgeCache()) {
             $collection = Cache::get($cacheKeyCollection);
         } else {
-            $collection = $this->buildRelationships($modelCustomAttributes)->filter()->groupBy('key')
-                ->when($this->handle, function ($collection) {
-                    $values = $collection->values();
-                    return $values->first();
-                });
+            $collection = $this->buildRelationships($modelCustomAttributes)->filter();
+            $values = $collection->values();
+            if (count($values) == 1) {
+                $values = $values->first();
+            }
+        
+            if (!$this->handle) {
+                $values = $collection->groupBy('key');
+            }
+
+            return $values;
 
             Cache::put($cacheKeyCollection, $collection);
         }
