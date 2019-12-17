@@ -16,7 +16,7 @@ class CreateAttributeValuesDefaultTable extends Migration
         Schema::create('attribute_values_default', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('custom_attribute_id');
-            $table->string('value');
+            $table->string('value')->nullable();
 
             $table->foreign('custom_attribute_id')->references('id')->on('custom_attributes')->onDelete('cascade');
         });

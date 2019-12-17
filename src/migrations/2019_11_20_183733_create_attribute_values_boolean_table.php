@@ -16,7 +16,7 @@ class CreateAttributeValuesBooleanTable extends Migration
         Schema::create('attribute_values_boolean', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('custom_attribute_id');
-            $table->boolean('value');
+            $table->boolean('value')->nullable();
 
             $table->foreign('custom_attribute_id')->references('id')->on('custom_attributes')->onDelete('cascade');
         });

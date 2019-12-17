@@ -16,10 +16,10 @@ class CreateAttributeValuesContactInformationTable extends Migration
         Schema::create('attribute_values_contact_information', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('custom_attribute_id');
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('email');
-            $table->string('mobile_phone');
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->nullable();
+            $table->string('mobile_phone')->nullable();
 
             $table->foreign('custom_attribute_id')->references('id')->on('custom_attributes')->onDelete('cascade');
         });
