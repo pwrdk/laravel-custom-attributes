@@ -1,6 +1,7 @@
 {
     "name": "pwrdk/laravel-custom-attributes",
     "description": "Custom Attributes Package for Eloquent Models",
+    "license": "MIT",
     "require": {
         "php": "^7.3"
     },
