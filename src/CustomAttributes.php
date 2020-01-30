@@ -123,8 +123,10 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function get(\Closure $callback = null)
+    public function get($attributeHandle = null, \Closure $callback = null)
     {
+        $this->handle = $attributeHandle;
+
         $this->collection = collect();
         $cacheKey = $this->makeCacheKey();
 
