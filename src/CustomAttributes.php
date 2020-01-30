@@ -21,7 +21,11 @@ class CustomAttributes
     {
         $this->creatorId = $creatorId;
         $this->model = $model;
-        $this->classPath = 'PWRDK\CustomAttributes\Models\AttributeTypes\\';
+    }
+
+    public function setClassPath($path)
+    {
+        $this->classPath = $path;
     }
 
     /**
@@ -100,9 +104,17 @@ class CustomAttributes
         if ($this->creatorId > 0) {
             $data['creator_id'] = $this->creatorId;
         }
+        
+        if ($this->model instanceof HasLocalCustomAttributeType) {
+            $this->setClassPath('App\Models\AttributeTypes\\');
+        } else {
+            $this->setClassPath('PWRDK\CustomAttributes\Models\AttributeTypes\\');
+        }
+
         $newCa = $this->model->customAttributes()->create($data);
 
         $className = $this->classPath . $relationshipName;
+
         //- Create a new entry in the CustomAttributes table
 
         $attr = $newCa->$relationshipName()->save(
@@ -111,7 +123,7 @@ class CustomAttributes
                 ['custom_attribute_id' => $newCa->id],
             )
         );
-
+        
         Cache::forget($this->makeCacheKey());
         return $attr;
     }
@@ -161,8 +173,6 @@ class CustomAttributes
             if (!$this->handle) {
                 $values = $collection->groupBy('key');
             }
-
-            return $values;
 
             Cache::put($cacheKeyCollection, $collection);
         }

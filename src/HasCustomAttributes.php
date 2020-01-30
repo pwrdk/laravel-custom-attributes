@@ -9,7 +9,11 @@ trait HasCustomAttributes
 {
     public function customAttributes()
     {
-        return $this->morphMany(CustomAttribute::class, 'attributable');
+        if ($this instanceof HasLocalCustomAttributeType) {
+            return $this->morphMany(\App\Models\CustomAttribute::class, 'attributable');
+        } else {
+            return $this->morphMany(CustomAttribute::class, 'attributable');
+        }
     }
 
     public function attr()
