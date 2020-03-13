@@ -141,7 +141,7 @@ $user->attr()->update(58, ['value' => 'cyan']);
    }
 ```
 
-Using local AttributeTypes
+## Using local AttributeTypes
 - Create new model called CustomAttributes in your own models directory
 - make a migration for the attribute type.
 
@@ -169,7 +169,7 @@ class CustomAttribute extends CustomAttributeModel
 Add the `HasLocalCustomAttributeType` interface to the model(s) 
 
 ``` php
-class Product extends Model implements UsesCustomAttributesCaching, HasLocalCustomAttributeType
+class Product extends Model implements HasLocalCustomAttributeType
 {
   ...
 }
@@ -180,3 +180,14 @@ Set the values for the attributes
 $product = App\Models\Product::find(1000);
 $product->attr()->set('prices', ['usd' => 100, 'eur' => 100, 'gbp' => 90, 'jpy' => 10695]);
 ```
+## Caching attribute values:
+Add the `HasLocalCustomAttributeType` interface to the model(s) 
+
+``` php
+class Product extends Model implements UsesCustomAttributesCaching, HasLocalCustomAttributeType
+{
+  ...
+}
+```
+
+
