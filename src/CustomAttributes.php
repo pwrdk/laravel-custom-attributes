@@ -2,12 +2,13 @@
 
 namespace PWRDK\CustomAttributes;
 
+use Cache;
 use Illuminate\Support\Str;
+use PWRDK\CustomAttributes\CustomAttributeOutput;
+use PWRDK\CustomAttributes\Interfaces\UsesCustomAttributesCaching;
 use PWRDK\CustomAttributes\Models\AttributeKey;
 use PWRDK\CustomAttributes\Models\AttributeType;
 use PWRDK\CustomAttributes\Models\CustomAttribute;
-use PWRDK\CustomAttributes\CustomAttributeOutput;
-use Cache;
 
 class CustomAttributes
 {
@@ -21,6 +22,9 @@ class CustomAttributes
     {
         $this->creatorId = $creatorId;
         $this->model = $model;
+        if ($model instanceof UsesCustomAttributesCaching) {
+            $this->useCaching = true;
+        }
     }
 
     public function setClassPath($path)
@@ -74,6 +78,12 @@ class CustomAttributes
 
     public function set($handle, $newValues)
     {
+        //- Clear the cache values first
+        $cacheKeyCollection = Cache::get($this->makeCacheKey());
+        Cache::forget($this->makeCacheKey() . ':' . md5($cacheKeyCollection));
+        Cache::forget($this->makeCacheKey());
+        \Log::debug("Cache cleared " . $cacheKeyCollection);
+        
         //- Only needed for the cache-key
         $this->handle = $handle;
 
@@ -124,7 +134,6 @@ class CustomAttributes
             )
         );
         
-        Cache::forget($this->makeCacheKey());
         return $attr;
     }
     
@@ -162,7 +171,8 @@ class CustomAttributes
         $cacheKeyCollection = $cacheKey . ':' . md5($modelCustomAttributes);
 
         if ($this->useCaching && Cache::has($cacheKeyCollection) && !self::shouldPurgeCache()) {
-            $collection = Cache::get($cacheKeyCollection);
+            $values = Cache::get($cacheKeyCollection);
+            \Log::debug("Getting from cache " . $cacheKeyCollection);
         } else {
             $collection = $this->buildRelationships($modelCustomAttributes)->filter();
             $values = $collection->values();
@@ -173,15 +183,15 @@ class CustomAttributes
             if (!$this->handle) {
                 $values = $collection->groupBy('key');
             }
-
-            Cache::put($cacheKeyCollection, $collection);
+            \Log::debug("Adding to cache " . $cacheKeyCollection);
+            Cache::put($cacheKeyCollection, $values);
         }
         
         if (!is_null($callback)) {
-            return $callback($collection);
+            return $callback($values);
         }
 
-        return $collection;
+        return $values;
     }
 
     public function buildRelationships($modelCustomAttributes)
@@ -293,9 +303,14 @@ class CustomAttributes
         return 'attributeType' . Str::studly($type);
     }
 
-    protected function makeCacheKey($handle = false)
+    protected function makeCacheKey()
     {
-        return str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($this->handle ?? $handle ?? 'all');
+        $handle = !empty($this->handle) ? empty($this->handle) : 'all';
+
+        $cacheKey = 'custom-attributes:';
+        $cacheKey .= str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($handle);
+        
+        return $cacheKey;
     }
 
     public static function shouldPurgeCache($put = false)
@@ -314,8 +329,7 @@ class CustomAttributes
 
     public function __get($attr)
     {
-        $this->handle = $attr;
-        return $this->get();
+        return $this->get($attr);
     }
 
     public static function getByType($handle)
