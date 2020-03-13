@@ -190,6 +190,11 @@ class CustomAttributes
         } else {
             $collection = $this->buildRelationships($modelCustomAttributes)->filter();
             $values = $collection->values();
+            
+            if (count($values) == 0) {
+                return false;
+            }
+            
             if (count($values) == 1) {
                 $values = $values->first();
             }
@@ -197,6 +202,7 @@ class CustomAttributes
             if (!$this->handle) {
                 $values = $collection->groupBy('key');
             }
+
             \Log::debug("Adding to cache " . $cacheKeyCollection);
             Cache::put($cacheKeyCollection, $values);
         }
