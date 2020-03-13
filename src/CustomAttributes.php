@@ -78,11 +78,11 @@ class CustomAttributes
 
     public function set($handle, $newValues)
     {
+        $this->handle = $handle;
         //- Clear the cache values first
         $cacheKeyCollection = Cache::get($this->makeCacheKey());
         Cache::forget($this->makeCacheKey() . ':' . md5($cacheKeyCollection));
         Cache::forget($this->makeCacheKey());
-        \Log::debug("Cache cleared " . $cacheKeyCollection);
         
         //- Only needed for the cache-key
         $this->handle = $handle;
