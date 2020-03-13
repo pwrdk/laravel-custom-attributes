@@ -104,35 +104,49 @@ class CustomAttributes
         }
         $relationshipName = $this->makeRelationshipName($type);
 
-        if ($ak->is_unique) {
-            //- Get existing
-            $this->model->customAttributes()->where('key_id', $ak->id)->delete();
-        }
-
         //- Create a new entry in the CustomAttributes table
         $data = ['key_id' => $ak->id];
         if ($this->creatorId > 0) {
             $data['creator_id'] = $this->creatorId;
         }
-        
-        if ($this->model instanceof HasLocalCustomAttributeType) {
+
+        if ($this->model instanceof HasLocalCustomAttributeType && class_exists('App\Models\AttributeTypes\\' . ucFirst($relationshipName))) {
             $this->setClassPath('App\Models\AttributeTypes\\');
         } else {
             $this->setClassPath('PWRDK\CustomAttributes\Models\AttributeTypes\\');
         }
 
-        $newCa = $this->model->customAttributes()->create($data);
-
         $className = $this->classPath . $relationshipName;
 
         //- Create a new entry in the CustomAttributes table
 
-        $attr = $newCa->$relationshipName()->save(
-            new $className(
-                $newValues +
+        if ($ak->is_unique) {
+            $newCa = $this->model->customAttributes()->where('key_id', $ak->id)->first();
+
+            $attr = $className::updateOrCreate(
                 ['custom_attribute_id' => $newCa->id],
-            )
+                $newValues
+            );
+        } else {
+            $newCa = $this->model->customAttributes()->create($data);
+            $attr = $className::create(
+                ['custom_attribute_id' => $newCa->id],
+                $newValues
+            );
+        }
+
+
+        $attr = $className::updateOrCreate(
+            ['custom_attribute_id' => $newCa->id],
+            $newValues
         );
+
+        // $attr = $newCa->$relationshipName()->save(
+        //     $className::firstOrNew(
+        //         ['custom_attribute_id' => $newCa->id],
+        //         $newValues
+        //     )
+        // );
         
         return $attr;
     }
@@ -305,7 +319,7 @@ class CustomAttributes
 
     protected function makeCacheKey()
     {
-        $handle = !empty($this->handle) ? empty($this->handle) : 'all';
+        $handle = !empty($this->handle) ? $this->handle : 'all';
 
         $cacheKey = 'custom-attributes:';
         $cacheKey .= str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($handle);
