@@ -121,7 +121,7 @@ class CustomAttributes
         //- Create a new entry in the CustomAttributes table
 
         if ($ak->is_unique) {
-            $newCa = $this->model->customAttributes()->where('key_id', $ak->id)->first();
+            $newCa = $this->model->customAttributes()->firstOrCreate(['key_id' => $ak->id]);
 
             $attr = $className::updateOrCreate(
                 ['custom_attribute_id' => $newCa->id],
