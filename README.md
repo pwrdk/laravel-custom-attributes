@@ -141,5 +141,42 @@ $user->attr()->update(58, ['value' => 'cyan']);
    }
 ```
 
+Using local AttributeTypes
+- Create new model called CustomAttributes in your own models directory
+- make a migration for the attribute type.
 
+``` php
+art make:migration create_values_type_prices_table
+```
 
+Create a new attribute key type
+``` php
+AttributeType::create(['handle' => 'prices', 'display_name' => 'Prices in different currencies']);
+```
+
+Extend CustomAttributes model from the package and add the new attribute type relationships
+
+``` php
+class CustomAttribute extends CustomAttributeModel
+{
+    public function attributeTypeScheduleEventOverlay()
+    {
+        return $this->hasOne(AttributeTypeScheduleEventOverlay::class);
+    }
+}
+```
+
+Add the `HasLocalCustomAttributeType` interface to the model(s) 
+
+``` php
+class Product extends Model implements UsesCustomAttributesCaching, HasLocalCustomAttributeType
+{
+  ...
+}
+```
+
+Set the values for the attributes
+``` php
+$product = App\Models\Product::find(1000);
+$product->attr()->set('prices', ['usd' => 100, 'eur' => 100, 'gbp' => 90, 'jpy' => 10695]);
+```
