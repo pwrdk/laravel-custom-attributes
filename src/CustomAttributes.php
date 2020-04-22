@@ -120,7 +120,6 @@ class CustomAttributes
             $this->setClassPath('PWRDK\CustomAttributes\Models\AttributeTypes\\');
         }
         $className = $this->classPath . ucfirst($relationshipName);
-        \Log::info($className);
 
         //- Create a new entry in the CustomAttributes table
         if ($ak->is_unique) {
