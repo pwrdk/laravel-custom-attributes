@@ -119,8 +119,8 @@ class CustomAttributes
         } else {
             $this->setClassPath('PWRDK\CustomAttributes\Models\AttributeTypes\\');
         }
-
         $className = $this->classPath . ucfirst($relationshipName);
+        \Log::info($className);
 
         //- Create a new entry in the CustomAttributes table
         if ($ak->is_unique) {
@@ -308,7 +308,7 @@ class CustomAttributes
             $type = 'default';
         }
         
-        return 'attributeType' . Str::studly($type);
+        return 'AttributeType' . Str::studly($type);
     }
 
     protected function makeCacheKey($handle = false)
