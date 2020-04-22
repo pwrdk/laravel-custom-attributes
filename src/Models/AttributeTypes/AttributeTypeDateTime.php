@@ -4,7 +4,7 @@ namespace PWRDK\CustomAttributes\Models\AttributeTypes;
 use Illuminate\Database\Eloquent\Model;
 use PWRDK\CustomAttributes\IsCustomAttribute;
 
-class AttributeTypeDateTime extends Model
+class AttributeTypeDatetime extends Model
 {
     use IsCustomAttribute;
 
