@@ -53,7 +53,7 @@ class CustomAttributes
         //- The handle is needed for the cache
         $this->handle = $attribute->key->handle;
 
-        Cache::forget($this->makeCacheKey());
+        Cache::forget($this->makeCacheKey($this->handle));
 
         return $targetAttribute;
     }
@@ -66,6 +66,8 @@ class CustomAttributes
      */
     public function unset($handle = false)
     {
+        self::shouldPurgeCache(true);
+        
         if (!$handle) {
             $this->model->customAttributes()->delete();
         } else {
@@ -73,19 +75,21 @@ class CustomAttributes
             $this->model->customAttributes()->where('key_id', $ak->id)->delete();
         }
         $this->handle = $handle;
+
+        Cache::forget($this->makeCacheKey($this->handle));
         Cache::forget($this->makeCacheKey());
     }
 
     public function set($handle, $newValues)
     {
+        self::shouldPurgeCache(true);
+        
         $this->handle = $handle;
         //- Clear the cache values first
-        $cacheKeyCollection = Cache::get($this->makeCacheKey());
-        Cache::forget($this->makeCacheKey() . ':' . md5($cacheKeyCollection));
-        Cache::forget($this->makeCacheKey());
-        
-        //- Only needed for the cache-key
-        $this->handle = $handle;
+        $cacheKey = $this->makeCacheKey($this->handle);
+        $cacheKeyCollection = Cache::get($cacheKey);
+        Cache::forget($cacheKey . ':' . md5($cacheKeyCollection));
+        Cache::forget($cacheKey);
 
         if (!is_array($newValues)) {
             $newValues = ['value' => $newValues];
@@ -116,10 +120,9 @@ class CustomAttributes
             $this->setClassPath('PWRDK\CustomAttributes\Models\AttributeTypes\\');
         }
 
-        $className = $this->classPath . $relationshipName;
+        $className = $this->classPath . ucfirst($relationshipName);
 
         //- Create a new entry in the CustomAttributes table
-
         if ($ak->is_unique) {
             $newCa = $this->model->customAttributes()->firstOrCreate(['key_id' => $ak->id]);
 
@@ -129,24 +132,9 @@ class CustomAttributes
             );
         } else {
             $newCa = $this->model->customAttributes()->create($data);
-            $attr = $className::create(
-                ['custom_attribute_id' => $newCa->id],
-                $newValues
-            );
+            $newValues += ['custom_attribute_id' => $newCa->id];
+            $attr = $className::create($newValues);
         }
-
-
-        $attr = $className::updateOrCreate(
-            ['custom_attribute_id' => $newCa->id],
-            $newValues
-        );
-
-        // $attr = $newCa->$relationshipName()->save(
-        //     $className::firstOrNew(
-        //         ['custom_attribute_id' => $newCa->id],
-        //         $newValues
-        //     )
-        // );
         
         return $attr;
     }
@@ -158,24 +146,18 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function get($attributeHandle = null, \Closure $callback = null)
+    public function get($attributeHandle = null, $fresh = true, \Closure $callback = null)
     {
+
         $this->handle = $attributeHandle;
 
         $this->collection = collect();
-        $cacheKey = $this->makeCacheKey();
+        $cacheKey = $this->makeCacheKey($this->handle);
 
-        if ($this->useCaching && Cache::has($cacheKey) && !self::shouldPurgeCache()) {
+        if ($this->useCaching && !$fresh && Cache::has($cacheKey) && !self::shouldPurgeCache()) {
             $modelCustomAttributes = Cache::get($cacheKey);
         } else {
-            $modelCustomAttributes = $this->model->customAttributes()->when($this->handle, function ($query) {
-                $query->whereHas('key', function ($query) {
-                    return $query->where('handle', $this->handle);
-                });
-            })->when($this->creatorId, function ($query) {
-                $query->with('creator');
-            })->get();
-
+            $modelCustomAttributes = $this->getModelCustomAttributes();
             if (!count($modelCustomAttributes)) {
                 return false;
             }
@@ -184,26 +166,30 @@ class CustomAttributes
 
         $cacheKeyCollection = $cacheKey . ':' . md5($modelCustomAttributes);
 
-        if ($this->useCaching && Cache::has($cacheKeyCollection) && !self::shouldPurgeCache()) {
+        if ($this->useCaching && !$fresh && Cache::has($cacheKeyCollection) && !self::shouldPurgeCache()) {
             $values = Cache::get($cacheKeyCollection);
-            \Log::debug("Getting from cache " . $cacheKeyCollection);
+            // \Log::debug("Getting from cache " . $cacheKeyCollection);
         } else {
             $collection = $this->buildRelationships($modelCustomAttributes)->filter();
+
             $values = $collection->values();
-            
+
             if (count($values) == 0) {
                 return false;
             }
-            
-            if (count($values) == 1) {
-                $values = $values->first();
+
+            //- If we only have a single value, we can just return that one.
+            //- If the key is marked as unique however, we must return a collection
+            if (count($values) == 1 && $values->first()->unique) {
+                return $values->first();
             }
-        
+
+            //- If we have requested every attribute, we'll group them by their key
             if (!$this->handle) {
                 $values = $collection->groupBy('key');
             }
 
-            \Log::debug("Adding to cache " . $cacheKeyCollection);
+            // \Log::debug("Adding to cache " . $cacheKeyCollection);
             Cache::put($cacheKeyCollection, $values);
         }
         
@@ -221,6 +207,7 @@ class CustomAttributes
 
             $relationshipName = $this->makeRelationshipName($type);
             $types[] = $type;
+
             if ($mappedValue = $customAttributeModel->{$relationshipName}()->first()) {
                 $mappedValue = $mappedValue->mappedValue();
             } else {
@@ -229,6 +216,7 @@ class CustomAttributes
             $data = [
                 'key' => $customAttributeModel->key->handle,
                 'value' => $mappedValue,
+                'unique' => $customAttributeModel->key->is_unique,
                 'created_at' => $customAttributeModel->created_at,
                 'id' => $customAttributeModel->id,
             ];
@@ -254,11 +242,12 @@ class CustomAttributes
      */
     public static function createKey($handle, $name, $type, $isUnique = true)
     {
+
         if ($existing = AttributeKey::where('handle', $handle)->first()) {
             return $existing;
         }
-
         $type = AttributeType::where('handle', $type)->first();
+
         $ak = AttributeKey::create([
             'type_id' => $type->id,
             'display_name' => $name,
@@ -312,7 +301,6 @@ class CustomAttributes
      * @return string
      * @author PWR
      */
-
     protected function makeRelationshipName($type)
     {
         //- @todo: Move this to a map of some sort
@@ -323,9 +311,9 @@ class CustomAttributes
         return 'attributeType' . Str::studly($type);
     }
 
-    protected function makeCacheKey()
+    protected function makeCacheKey($handle = false)
     {
-        $handle = !empty($this->handle) ? $this->handle : 'all';
+        $handle = !empty($handle) ? $handle : 'all';
 
         $cacheKey = 'custom-attributes:';
         $cacheKey .= str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($handle);
@@ -352,6 +340,12 @@ class CustomAttributes
         return $this->get($attr);
     }
 
+    /**
+     * Get custom attributes for a model by the attribute key type
+     *
+     * @return array
+     * @author PWR
+     */
     public static function getByType($handle)
     {
         $type = AttributeType::with('keys')->where('handle', $handle)->first();
@@ -365,5 +359,22 @@ class CustomAttributes
         }
 
         return $output;
+    }
+
+    /**
+     * Get the customattributes for a model
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     * @author PWR
+     */
+    public function getModelCustomAttributes()
+    {
+        return $this->model->customAttributes()->when($this->handle, function ($query) {
+            $query->whereHas('key', function ($query) {
+                return $query->where('handle', $this->handle);
+            });
+        })->when($this->creatorId, function ($query) {
+            $query->with('creator');
+        })->get();
     }
 }
