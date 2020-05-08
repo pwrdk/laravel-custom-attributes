@@ -22,6 +22,9 @@
     "autoload": {
         "psr-4": {
             "PWRDK\\CustomAttributes\\": "src/"
-        }
+        },
+        "files": [
+            "app/Helpers/custom_attribute_helpers.php"
+        ]
     }
 }
