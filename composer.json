@@ -24,7 +24,7 @@
             "PWRDK\\CustomAttributes\\": "src/"
         },
         "files": [
-            "app/Helpers/custom_attribute_helpers.php"
+            "src/Helpers/custom_attribute_helpers.php"
         ]
     }
 }
