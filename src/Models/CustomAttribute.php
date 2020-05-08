@@ -43,9 +43,9 @@ class CustomAttribute extends Model
         return $this->hasOne(AttributeTypes\AttributeTypeNumber::class);
     }
 
-    public function attributeTypeDateTime()
+    public function attributeTypeDatetime()
     {
-        return $this->hasOne(AttributeTypes\AttributeTypeDateTime::class);
+        return $this->hasOne(AttributeTypes\AttributeTypeDatetime::class);
     }
 
     public function attributeTypeContactInformation()
