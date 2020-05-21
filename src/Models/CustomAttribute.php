@@ -52,4 +52,9 @@ class CustomAttribute extends Model
     {
         return $this->hasOne(AttributeTypes\AttributeTypeContactInformation::class);
     }
+
+    public function attributeTypeFile()
+    {
+        return $this->hasMany(AttributeTypeFile::class);
+    }
 }

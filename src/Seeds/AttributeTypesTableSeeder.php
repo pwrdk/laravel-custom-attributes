@@ -37,5 +37,10 @@ class AttributeTypesTableSeeder extends Seeder
             'handle' => 'datetime',
             'display_name' => 'Date Time'
         ]);
+
+        \DB::table('attribute_types')->insert([
+            'handle' => 'file',
+            'display_name' => 'File'
+        ]);
     }
 }
