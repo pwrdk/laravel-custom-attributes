@@ -55,6 +55,6 @@ class CustomAttribute extends Model
 
     public function attributeTypeFile()
     {
-        return $this->hasMany(AttributeTypeFile::class);
+        return $this->hasMany(AttributeTypes\AttributeTypeFile::class);
     }
 }
