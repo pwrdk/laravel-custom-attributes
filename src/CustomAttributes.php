@@ -3,6 +3,7 @@
 namespace PWRDK\CustomAttributes;
 
 use Cache;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PWRDK\CustomAttributes\CustomAttributeOutput;
 use PWRDK\CustomAttributes\Interfaces\UsesCustomAttributesCaching;
@@ -17,6 +18,7 @@ class CustomAttributes
     protected $classPath;
     protected $creatorId;
     protected $useCaching = false;
+    protected $returnDirectOutput = false;
 
     public function __construct($model, $creatorId = null)
     {
@@ -138,6 +140,11 @@ class CustomAttributes
         return $attr;
     }
     
+    public function direct()
+    {
+        $this->returnDirectOutput = true;
+        return $this;
+    }
 
     /**
      * Get a collection of attributes from the current handl
@@ -180,6 +187,10 @@ class CustomAttributes
             //- If we only have a single value, we can just return that one.
             //- If the key is marked as unique however, we must return a collection
             if (count($values) == 1 && $values->first()->unique) {
+                if ($this->returnDirectOutput) {
+                    return $values->first()->value;
+                }
+
                 return $values->first();
             }
 
@@ -194,6 +205,17 @@ class CustomAttributes
         
         if (!is_null($callback)) {
             return $callback($values);
+        }
+
+        if ($this->returnDirectOutput) {            
+            return $values->map(function ($attribute) {
+                if (is_a($attribute, Collection::class)) {
+                    return $attribute->values()->pluck('value');
+                } else {
+                    return $attribute->value;
+                }
+            });
+
         }
 
         return $values;
@@ -212,6 +234,7 @@ class CustomAttributes
             } else {
                 return false;
             }
+
             $data = [
                 'key' => $customAttributeModel->key->handle,
                 'value' => $mappedValue,
@@ -241,10 +264,10 @@ class CustomAttributes
      */
     public static function createKey($handle, $name, $type, $isUnique = true)
     {
-
         if ($existing = AttributeKey::where('handle', $handle)->first()) {
             return $existing;
         }
+
         $type = AttributeType::where('handle', $type)->first();
 
         $ak = AttributeKey::create([
