@@ -8,7 +8,7 @@ class AttributeTypeContactInformation extends Model
 {
     use IsCustomAttribute;
 
-    protected $fillable = ['custom_attribute_id','first_name', 'last_name', 'email', 'mobile_phone'];
+    protected $fillable = ['custom_attribute_id','first_name', 'last_name', 'email', 'mobile_phone', 'position'];
     public $timestamps = false;
     protected $primaryKey = 'custom_attribute_id';
     protected $table = 'attribute_values_contact_information';
@@ -16,6 +16,6 @@ class AttributeTypeContactInformation extends Model
 
     public function mappedValue()
     {
-        return $this->only('first_name', 'last_name', 'email', 'mobile_number');
+        return $this->only('first_name', 'last_name', 'email', 'mobile_number', 'position');
     }
 }
