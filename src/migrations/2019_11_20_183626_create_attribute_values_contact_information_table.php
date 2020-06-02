@@ -20,6 +20,7 @@ class CreateAttributeValuesContactInformationTable extends Migration
             $table->string('last_name')->nullable();
             $table->string('email')->nullable();
             $table->string('mobile_phone')->nullable();
+            $table->string('position')->nullable();
 
             $table->foreign('custom_attribute_id')->references('id')->on('custom_attributes')->onDelete('cascade');
         });

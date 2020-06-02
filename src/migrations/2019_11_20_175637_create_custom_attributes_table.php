@@ -22,7 +22,6 @@ class CreateCustomAttributesTable extends Migration
             $table->timestamps();
             
             $table->foreign('key_id')->references('id')->on('attribute_keys')->onDelete('cascade');
-            $table->foreign('creator_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
