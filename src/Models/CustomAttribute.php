@@ -57,4 +57,9 @@ class CustomAttribute extends Model
     {
         return $this->hasMany(AttributeTypes\AttributeTypeFile::class);
     }
+
+    public function attributeTypeJson()
+    {
+        return $this->hasOne(AttributeTypes\AttributeTypeJson::class);
+    }
 }
