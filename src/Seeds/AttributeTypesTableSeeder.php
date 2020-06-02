@@ -42,5 +42,15 @@ class AttributeTypesTableSeeder extends Seeder
             'handle' => 'file',
             'display_name' => 'File'
         ]);
+
+        \DB::table('attribute_types')->insert([
+            'handle' => 'json',
+            'display_name' => 'JSON'
+        ]);
+
+        \DB::table('attribute_types')->insert([
+            'handle' => 'email',
+            'display_name' => 'Email'
+        ]);
     }
 }
