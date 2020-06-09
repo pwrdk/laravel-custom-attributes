@@ -1,16 +1,10 @@
 <?php
 
-function attr($object, $attributeKey, $key = null)
+function attr($model, $key, $index = false)
 {
-    $value = $object->attr()->get($attributeKey)->value;
-    
-    if (!$value) {
-        throw new \Exception("No such attribute " . $attributeKey);
+    if ($index) {
+        return $model->attr()->$key->value[$index] ?? null;
     }
 
-    if (!$key) {
-        return $value;
-    }
-
-    return $value[$key];
+    return $model->attr()->$key->value ?? null;
 }
