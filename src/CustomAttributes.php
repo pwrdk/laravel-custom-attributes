@@ -19,14 +19,22 @@ class CustomAttributes
     protected $creatorId;
     protected $useCaching = false;
     protected $returnDirectOutput = false;
+    protected $debug = false;
 
-    public function __construct($model, $creatorId = null)
+    public function __construct($model, $handle = null, $creatorId = null)
     {
+        $this->handle = $handle;
         $this->creatorId = $creatorId;
         $this->model = $model;
         if ($model instanceof UsesCustomAttributesCaching) {
             $this->useCaching = true;
         }
+    }
+
+    public function __get($attr)
+    {
+        $this->handle = $attr;
+        return $this->get();
     }
 
     public function setClassPath($path)
@@ -60,6 +68,12 @@ class CustomAttributes
         return $targetAttribute;
     }
 
+    public function noCache()
+    {
+        $this->useCaching = false;
+        return $this;
+    }
+
     /**
      * Unset all of the custom attributes for the current handle from this model
      *
@@ -67,9 +81,7 @@ class CustomAttributes
      * @author PWR
      */
     public function unset($handle = false)
-    {
-        self::shouldPurgeCache(true);
-        
+    {   
         if (!$handle) {
             $this->model->customAttributes()->delete();
         } else {
@@ -82,22 +94,19 @@ class CustomAttributes
         Cache::forget($this->makeCacheKey());
     }
 
-    public function set($handle, $newValues)
-    {
-        self::shouldPurgeCache(true);
-        
-        $this->handle = $handle;
+    public function set($newValues)
+    {   
         //- Clear the cache values first
         $cacheKey = $this->makeCacheKey($this->handle);
-        $cacheKeyCollection = Cache::get($cacheKey);
-        Cache::forget($cacheKey . ':' . md5($cacheKeyCollection));
         Cache::forget($cacheKey);
-
+        
+        $this->debug("Dropping cacheKey " . $cacheKey);
+        
         if (!is_array($newValues)) {
             $newValues = ['value' => $newValues];
         }
 
-        $ak = $this->getAttributeKeyByHandle($handle);
+        $ak = $this->getAttributeKeyByHandle($this->handle);
         if (!$ak) {
             return false;
         }
@@ -152,70 +161,74 @@ class CustomAttributes
      * @return Illuminate\Support\Collection
      * @author PWR
      */
-    public function get($attributeHandle = null, $fresh = true, \Closure $callback = null)
+    public function get($column = null, \Closure $callback = null)
     {
 
-        $this->handle = $attributeHandle;
+        // $this->handle = $attributeHandle;
 
         $this->collection = collect();
         $cacheKey = $this->makeCacheKey($this->handle);
-
-        if ($this->useCaching && !$fresh && Cache::has($cacheKey) && !self::shouldPurgeCache()) {
-            $modelCustomAttributes = Cache::get($cacheKey);
+        if (!$this->useCaching) {
+            $this->debug("Getting fresh " . $cacheKey);
+            $values = $this->getValues();
         } else {
-            $modelCustomAttributes = $this->getModelCustomAttributes();
-            if (!count($modelCustomAttributes)) {
-                return false;
+            if (Cache::has($cacheKey)) {
+                $this->debug("Getting from cache " . $cacheKey);
             }
-            Cache::put($cacheKey, $modelCustomAttributes);
+            $values = Cache::rememberForever($cacheKey, function () use ($cacheKey) {
+                $this->debug("Caching " . $cacheKey);
+                return $this->getValues();
+            });
         }
 
-        $cacheKeyCollection = $cacheKey . ':' . md5($modelCustomAttributes);
-
-        if ($this->useCaching && !$fresh && Cache::has($cacheKeyCollection) && !self::shouldPurgeCache()) {
-            $values = Cache::get($cacheKeyCollection);
-            // \Log::debug("Getting from cache " . $cacheKeyCollection);
-        } else {
-            $collection = $this->buildRelationships($modelCustomAttributes)->filter();
-
-            $values = $collection->values();
-
-            if (count($values) == 0) {
-                return false;
-            }
-
-            //- If we only have a single value, we can just return that one.
-            //- If the key is marked as unique however, we must return a collection
-            if (count($values) == 1 && $values->first()->unique) {
-                if ($this->returnDirectOutput) {
-                    return $values->first()->value;
-                }
-
-                return $values->first();
-            }
-
-            //- If we have requested every attribute, we'll group them by their key
-            if (!$this->handle) {
-                $values = $collection->groupBy('key');
-            }
-
-            // \Log::debug("Adding to cache " . $cacheKeyCollection);
-            Cache::put($cacheKeyCollection, $values);
+        if (!$values) {
+            return false;
         }
-        
+
+        if ($this->returnDirectOutput) {
+            return $values->output->toArray();
+        }
+
         if (!is_null($callback)) {
             return $callback($values);
         }
 
-        if ($this->returnDirectOutput) {            
-            return $values->map(function ($attribute) {
-                if (is_a($attribute, Collection::class)) {
-                    return $attribute->values()->pluck('value');
-                } else {
-                    return $attribute->value;
-                }
-            });
+        if ($column) {
+            return $values->output[$column] ?? null;
+        }
 
+        if (!is_a($values->output, \Illuminate\Support\Collection::class)) {
+            return $values->output;
+        }
+        
+        return $values;
+    }
+
+    public function getValues()
+    {
+        $modelCustomAttributes = $this->getModelCustomAttributes();
+        
+        if (!count($modelCustomAttributes)) {
+            return false;
+        }
+
+        $collection = $this->buildRelationships($modelCustomAttributes)->filter();
+
+        $values = $collection->values();
+
+        if (count($values) == 0) {
+            return false;
+        }
+
+        //- If we only have a single value, we can just return that one.
+        //- If the key is marked as unique however, we must return a collection
+        if (count($values) == 1 && $values->first()->unique) {            
+            return $values->first();
+        }
+
+        //- If we have requested every attribute, we'll group them by their key
+        if (!$this->handle) {
+            $values = $collection->groupBy('key');
         }
 
         return $values;
@@ -343,25 +356,6 @@ class CustomAttributes
         return $cacheKey;
     }
 
-    public static function shouldPurgeCache($put = false)
-    {
-        if (!$put) {
-            if (Cache::has('custom-attributes:should-purge')) {
-                Cache::forget('custom-attributes:should-purge');
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            Cache::put('custom-attributes:should-purge', 1);
-        }
-    }
-
-    public function __get($attr)
-    {
-        return $this->get($attr);
-    }
-
     /**
      * Get custom attributes for a model by the attribute key type
      *
@@ -398,5 +392,12 @@ class CustomAttributes
         })->when($this->creatorId, function ($query) {
             $query->with('creator');
         })->get();
+    }
+
+    private function debug($message, $payload = [])
+    {
+        if ($this->debug) {
+            \Log::debug($message, $payload);
+        }
     }
 }

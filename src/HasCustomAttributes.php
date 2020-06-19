@@ -16,8 +16,8 @@ trait HasCustomAttributes
         }
     }
 
-    public function attr()
+    public function attr($handle = null)
     {
-        return (new CustomAttributesManager($this, \Auth::user()->id ?? null));
+        return (new CustomAttributesManager($this, $handle, \Auth::user()->id ?? null));
     }
 }
