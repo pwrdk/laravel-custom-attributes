@@ -196,8 +196,8 @@ class CustomAttributes
         if ($column) {
             return $values->output[$column] ?? null;
         }
-
-        if (!is_a($values->output, \Illuminate\Support\Collection::class)) {
+        
+        if ($this->handle && !is_a($values->output, \Illuminate\Support\Collection::class)) {
             return $values->output;
         }
         
