@@ -186,7 +186,15 @@ class CustomAttributes
         }
 
         if ($this->returnDirectOutput) {
-            return $values->output->toArray();
+            if (is_a($values, \Illuminate\Support\Collection::class)) {
+                if ($this->handle) {
+                    return $values->map(fn($v) => $v->output->toArray());
+                } else {
+                    return $values->map(fn($v) => $v->pluck('output')->toArray());
+                }
+            } else {
+                return $values->toArray();
+            }
         }
 
         if (!is_null($callback)) {
@@ -196,11 +204,11 @@ class CustomAttributes
         if ($column) {
             return $values->output[$column] ?? null;
         }
-        
-        if ($this->handle && !is_a($values->output, \Illuminate\Support\Collection::class)) {
+
+        if (!is_a($values, \Illuminate\Support\Collection::class)) {
             return $values->output;
         }
-        
+
         return $values;
     }
 
