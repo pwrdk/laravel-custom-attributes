@@ -107,6 +107,7 @@ class CustomAttributes
         }
 
         $ak = $this->getAttributeKeyByHandle($this->handle);
+        
         if (!$ak) {
             return false;
         }
@@ -188,12 +189,16 @@ class CustomAttributes
         if ($this->returnDirectOutput) {
             if (is_a($values, \Illuminate\Support\Collection::class)) {
                 if ($this->handle) {
-                    return $values->map(fn($v) => $v->output->toArray());
+                    return $values->map(fn($v) => $v->output)->toArray();
                 } else {
                     return $values->map(fn($v) => $v->pluck('output')->toArray());
                 }
             } else {
-                return $values->toArray();
+                if (is_a($values, \PWRDK\CustomAttributes\CustomAttributeOutput::class)) {
+                    return $values->output;
+                } else {
+                    return $values->toArray();
+                }
             }
         }
 
@@ -290,6 +295,10 @@ class CustomAttributes
         }
 
         $type = AttributeType::where('handle', $type)->first();
+
+        if (!$type) {
+            throw new \Exception('No such type ' . $type);
+        }
 
         $ak = AttributeKey::create([
             'type_id' => $type->id,
