@@ -26,5 +26,16 @@
         "files": [
             "src/Helpers/custom_attribute_helpers.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PWRDK\\CustomAttributes\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.0@dev"
     }
 }
