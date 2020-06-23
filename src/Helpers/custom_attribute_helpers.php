@@ -1,10 +1,10 @@
 <?php
 
-function attr($model, $key, $index = false)
+function attr($model, $key, $column = false)
 {
-    if ($index) {
-        return $model->attr()->$key->value[$index] ?? null;
+    if ($column) {
+        return $model->attr($key)->get($column) ?? null;
     }
 
-    return $model->attr()->$key->value ?? null;
+    return $model->attr($key)->get() ?? null;
 }
