@@ -166,7 +166,6 @@ class CustomAttributes
     {
 
         // $this->handle = $attributeHandle;
-
         $this->collection = collect();
         $cacheKey = $this->makeCacheKey($this->handle);
         if (!$this->useCaching) {
@@ -210,7 +209,7 @@ class CustomAttributes
             return $values->output[$column] ?? null;
         }
 
-        if (!is_a($values, \Illuminate\Support\Collection::class)) {
+        if (!is_a($values, \Illuminate\Support\Collection::class) && $this->handle) {
             return $values->output;
         }
 
