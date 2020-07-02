@@ -99,8 +99,6 @@ class CustomAttributes
         //- Clear the cache values first
         Cache::forget($this->makeCacheKey($this->handle));
         Cache::forget($this->makeCacheKey());
-
-        $this->debug("Dropping cacheKey " . $cacheKey);
         
         if (!is_array($newValues)) {
             $newValues = ['value' => $newValues];
