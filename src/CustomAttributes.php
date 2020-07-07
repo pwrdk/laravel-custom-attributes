@@ -77,18 +77,17 @@ class CustomAttributes
     /**
      * Unset all of the custom attributes for the current handle from this model
      *
-     * @return Illuminate\Support\Collection
+     * @return void
      * @author PWR
      */
-    public function unset($handle = false)
-    {   
-        if (!$handle) {
+    public function unset() : void
+    {
+        if (!$this->handle) {
             $this->model->customAttributes()->delete();
         } else {
-            $ak = $this->getAttributeKeyByHandle($handle);
+            $ak = $this->getAttributeKeyByHandle($this->handle);
             $this->model->customAttributes()->where('key_id', $ak->id)->delete();
         }
-        $this->handle = $handle;
 
         Cache::forget($this->makeCacheKey($this->handle));
         Cache::forget($this->makeCacheKey());
