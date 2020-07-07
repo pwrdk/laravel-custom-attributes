@@ -27,6 +27,6 @@ class AttributeTypesTest extends TestCase
 
         $attributeValue = $user->attr('job_title')->get();
 
-        $this->assertTrue(is_integer($attributeValue), "Do!");
+        $this->assertTrue(is_string($attributeValue), "Do!");
     }
 }
