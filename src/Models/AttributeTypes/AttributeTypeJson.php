@@ -16,8 +16,6 @@ class AttributeTypeJson extends Model
 
     public function mappedValue()
     {
-        return [
-            'values' => json_decode($this->value)
-        ];
+        return json_decode($this->value);
     }
 }
