@@ -53,13 +53,13 @@ class CustomAttributes
         $attribute = CustomAttribute::find($attributeId);
         //- This gives us $attribute->attributeTypeDefault
         $relationshipName = $this->makeRelationshipName($attribute->key->type->handle);
-        
+
         //- There will always be only one entry per custom attribute row
         $targetAttribute = $attribute->{$relationshipName}()->first();
-        
+
         //- Perform the update
         $targetAttribute->update($newValues);
-        
+
         //- The handle is needed for the cache
         $this->handle = $attribute->key->handle;
 
@@ -80,7 +80,7 @@ class CustomAttributes
      * @return void
      * @author PWR
      */
-    public function unset() : void
+    public function unset(): void
     {
         if (!$this->handle) {
             $this->model->customAttributes()->delete();
@@ -94,17 +94,17 @@ class CustomAttributes
     }
 
     public function set($newValues)
-    {   
+    {
         //- Clear the cache values first
         Cache::forget($this->makeCacheKey($this->handle));
         Cache::forget($this->makeCacheKey());
-        
+
         if (!is_array($newValues)) {
             $newValues = ['value' => $newValues];
         }
 
         $ak = $this->getAttributeKeyByHandle($this->handle);
-        
+
         if (!$ak) {
             return false;
         }
@@ -143,10 +143,10 @@ class CustomAttributes
             $newValues += ['custom_attribute_id' => $newCa->id];
             $attr = $className::create($newValues);
         }
-        
+
         return $attr;
     }
-    
+
     public function direct()
     {
         $this->returnDirectOutput = true;
@@ -185,9 +185,9 @@ class CustomAttributes
         if ($this->returnDirectOutput) {
             if (is_a($values, \Illuminate\Support\Collection::class)) {
                 if ($this->handle) {
-                    return $values->map(fn($v) => $v->output)->toArray();
+                    return $values->map(fn ($v) => $v->output)->toArray();
                 } else {
-                    return $values->map(fn($v) => $v->pluck('output')->toArray());
+                    return $values->map(fn ($v) => $v->pluck('output')->toArray());
                 }
             } else {
                 if (is_a($values, \PWRDK\CustomAttributes\CustomAttributeOutput::class)) {
@@ -203,7 +203,7 @@ class CustomAttributes
         }
 
         if ($column) {
-            return $values->output[$column] ?? null;
+            return isset($values->output) ? $values->output->get($column) ?? null :  null;
         }
 
         if (!is_a($values, \Illuminate\Support\Collection::class) && $this->handle) {
@@ -216,7 +216,7 @@ class CustomAttributes
     public function getValues()
     {
         $modelCustomAttributes = $this->getModelCustomAttributes();
-        
+
         if (!count($modelCustomAttributes)) {
             return false;
         }
@@ -231,7 +231,7 @@ class CustomAttributes
 
         //- If we only have a single value, we can just return that one.
         //- If the key is marked as unique however, we must return a collection
-        if (count($values) == 1 && $values->first()->unique) {            
+        if (count($values) == 1 && $values->first()->unique) {
             return $values->first();
         }
 
@@ -268,9 +268,9 @@ class CustomAttributes
             if ($this->creatorId) {
                 $data += ['creator' => $customAttributeModel->creator];
             }
-            
+
             $obj = new CustomAttributeOutput($data);
-            
+
             return $obj;
         });
     }
@@ -355,7 +355,7 @@ class CustomAttributes
         if ($type == 'text') {
             $type = 'default';
         }
-        
+
         return 'AttributeType' . Str::studly($type);
     }
 
@@ -365,7 +365,7 @@ class CustomAttributes
 
         $cacheKey = 'custom-attributes:';
         $cacheKey .= str_replace("\\", ":", strtolower(get_class($this->model))) . ':' . $this->model->id . ':' . ($handle);
-        
+
         return $cacheKey;
     }
 
@@ -378,12 +378,12 @@ class CustomAttributes
     public static function getByType($handle)
     {
         $type = AttributeType::with('keys')->where('handle', $handle)->first();
+
         $output = collect();
         foreach ($type->keys as $key) {
             $modelCustomAttributes = (new static($key))->buildRelationships($key->customAttributes);
-
             foreach ($modelCustomAttributes as $attributeCollection) {
-                $output[$key->handle] = $attributeCollection->pluck('value');
+                $output[$key->handle] = $attributeCollection->output;
             }
         }
 
