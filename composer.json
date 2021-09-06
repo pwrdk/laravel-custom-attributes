@@ -3,7 +3,7 @@
     "description": "Custom Attributes Package for Eloquent Models",
     "license": "MIT",
     "require": {
-        "php": "^7.3"
+        "php": "^7.3|^8.0"
     },
     "authors": [
         {
