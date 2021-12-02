@@ -20,4 +20,13 @@ trait HasCustomAttributes
     {
         return (new CustomAttributesManager($this, $handle, \Auth::user()->id ?? null));
     }
+
+    public function scopeHasCustomAttribute($query, $handle)
+    {
+        if ($key = CustomAttributes::getKeyByHandle($handle)) {
+            return $query->whereHas('customAttributes', function ($builder) use ($key) {
+                return $builder->where('key_id', $key->id);
+            });
+        }
+    }
 }
