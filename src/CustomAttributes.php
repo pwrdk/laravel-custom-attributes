@@ -413,4 +413,22 @@ class CustomAttributes
             \Log::debug($message, $payload);
         }
     }
+
+    /**
+     * Get the attributable models for a given key
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     * @param $handle The handle of the key
+     * @author PWR
+     */
+    public static function getByKey($handle)
+    {
+        if (!$key = AttributeKey::where('handle', $handle)->first()) {
+            throw new \Exception("No such key " . $handle);
+        }
+
+        return $key->customAttributes->map(function ($attr) {
+            return $attr->attributable;
+        });
+    }
 }
