@@ -28,5 +28,7 @@ trait HasCustomAttributes
                 return $builder->where('key_id', $key->id);
             });
         }
+
+        throw new \Exception("No such key " . $handle);
     }
 }
