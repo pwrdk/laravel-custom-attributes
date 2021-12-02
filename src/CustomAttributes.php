@@ -423,12 +423,24 @@ class CustomAttributes
      */
     public static function getByKey($handle)
     {
-        if (!$key = AttributeKey::where('handle', $handle)->first()) {
+        if (!$key = static::getKeyByHandle($handle)) {
             throw new \Exception("No such key " . $handle);
         }
 
         return $key->customAttributes->map(function ($attr) {
             return $attr->attributable;
         });
+    }
+
+    /**
+     * Get the attribute key by it's handle
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     * @param $handle The handle of the key
+     * @author PWR
+     */
+    public static function getKeyByHandle($handle)
+    {
+        return AttributeKey::where('handle', $handle)->first();
     }
 }
