@@ -417,12 +417,23 @@ class CustomAttributes
     /**
      * Create a simple array out of the values
      *
-     * @return Illuminate\Database\Eloquent\Collection
+     * @return mixed
      * @author PWR
      */
-    public function flattened(): Collection
+    public function flattened()
     {
-        $output = $this->get()->map(function ($collection, $key) {
+        $values = $this->get();
+
+        if (!$values) {
+            return false;
+        }
+
+        if (is_a($values, CustomAttributeOutput::class)) {
+            return collect([$values->key => $values->output]);
+        }
+
+
+        return $values->map(function ($collection, $key) {
             if ($collection->first()->unique) {
                 return $collection->first()->output;
             }
@@ -433,8 +444,6 @@ class CustomAttributes
                 $return->push($attr->output);
             }
         });
-
-        return $output;
     }
 
     /**
