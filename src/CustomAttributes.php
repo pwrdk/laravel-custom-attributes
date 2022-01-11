@@ -415,6 +415,29 @@ class CustomAttributes
     }
 
     /**
+     * Create a simple array out of the values
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     * @author PWR
+     */
+    public function flattened(): Collection
+    {
+        $output = $this->get()->map(function ($collection, $key) {
+            if ($collection->first()->unique) {
+                return $collection->first()->output;
+            }
+
+            $return = collect();
+
+            foreach ($collection as $attr) {
+                $return->push($attr->output);
+            }
+        });
+
+        return $output;
+    }
+
+    /**
      * Get the attributable models for a given key
      *
      * @return Illuminate\Database\Eloquent\Collection
