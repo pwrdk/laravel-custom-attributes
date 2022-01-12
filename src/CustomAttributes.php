@@ -3,13 +3,14 @@
 namespace PWRDK\CustomAttributes;
 
 use Cache;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use PWRDK\CustomAttributes\CustomAttributeOutput;
-use PWRDK\CustomAttributes\Interfaces\UsesCustomAttributesCaching;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use PWRDK\CustomAttributes\Models\AttributeKey;
 use PWRDK\CustomAttributes\Models\AttributeType;
+use PWRDK\CustomAttributes\CustomAttributeOutput;
 use PWRDK\CustomAttributes\Models\CustomAttribute;
+use PWRDK\CustomAttributes\Interfaces\UsesCustomAttributesCaching;
 
 class CustomAttributes
 {
@@ -20,6 +21,7 @@ class CustomAttributes
     protected $useCaching = false;
     protected $returnDirectOutput = false;
     protected $debug = false;
+    public $timestampsAsSql;
 
     public function __construct($model, $handle = null, $creatorId = null)
     {
@@ -35,6 +37,12 @@ class CustomAttributes
     {
         $this->handle = $attr;
         return $this->get();
+    }
+
+    public function timestampsAsSql($value = false)
+    {
+        $this->timestampsAsSql = $value;
+        return $this;
     }
 
     public function setClassPath($path)
@@ -428,22 +436,43 @@ class CustomAttributes
             return false;
         }
 
+
+        //- If the result is a single attribute we have to turn it into a collection
         if (is_a($values, CustomAttributeOutput::class)) {
-            return collect([$values->key => $values->output]);
+            //- Check if the value output is a Carbon instance and should be rendered in SQL format
+            $output = ($this->shouldRenderTimestampsInSQLFormat($values->output))
+                ? (string) $values->output : $values->output;
+
+            return collect([$values->key => $output]);
         }
 
-
+        //- If there are multiple, we need to check for the unique flag
+        //- and if so, just return the first object in the collection
         return $values->map(function ($collection, $key) {
             if ($collection->first()->unique) {
-                return $collection->first()->output;
+                $output = $collection->first()->output;
+                if ($this->shouldRenderTimestampsInSQLFormat($output)) {
+                    $output = (string) $output;
+                }
+                return $output;
             }
 
             $return = collect();
 
+            //- Now we can just loop through the results and return them
             foreach ($collection as $attr) {
-                $return->push($attr->output);
+                $output = $attr->output;
+                if ($this->shouldRenderTimestampsInSQLFormat($output)) {
+                    $output = (string) $output;
+                }
+                $return->push($output);
             }
         });
+    }
+
+    public function shouldRenderTimestampsInSQLFormat($attribute)
+    {
+        return $this->timestampsAsSql && is_a($attribute, Carbon::class);
     }
 
     /**
